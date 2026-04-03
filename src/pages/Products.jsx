@@ -16,6 +16,38 @@ const searchQuery = searchParams.get("search") || "";
   const [sortBy, setSortBy] = useState("newest");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+
+  useEffect(() => {
+  let updatedProducts = [...products];
+
+  // ✅ 1. Handle Search
+  if (searchQuery) {
+    updatedProducts = updatedProducts.filter((product) =>
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+
+  // ✅ 2. Handle Category Filter
+  if (selectedCategory !== "All") {
+    updatedProducts = updatedProducts.filter(
+      (product) => product.category?.name === selectedCategory
+    );
+  }
+
+  // ✅ 3. Handle Sorting
+  if (sortBy === "price-low") {
+    updatedProducts.sort((a, b) => a.price - b.price);
+  } else if (sortBy === "price-high") {
+    updatedProducts.sort((a, b) => b.price - a.price);
+  } else if (sortBy === "newest") {
+    updatedProducts.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+  }
+
+  setFilteredProducts(updatedProducts);
+}, [products, searchQuery, selectedCategory, sortBy]);
+
 useEffect(() => {
   const loadInitialData = async () => {
     setLoading(true);
