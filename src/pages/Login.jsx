@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowRight, Chrome } from "lucide-react";
-import api, { loginUser } from "../services/api";
+import * as api from "../services/api";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 function Login() {
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
   });
+  const { login } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -19,17 +22,15 @@ function Login() {
  const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    const res = await loginUser(credentials);
+    const res = await api.loginUser(credentials);
     const { token, user } = res.data.data;
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+    login(user, token);
 
     // SYNC GUEST CART TO BACKEND
     const guestCart = JSON.parse(localStorage.getItem("guest_cart")) || [];
     if (guestCart.length > 0) {
       for (const item of guestCart) {
-        await api.post("/cart/add", { productId: item.id, qty: item.qty });
+        await api.postToCart({ productId: item.productId, qty: item.qty, price: item.price, name: item.name, image: item.image });
       }
       localStorage.removeItem("guest_cart"); // Clear after sync
     }

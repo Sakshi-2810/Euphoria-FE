@@ -23,7 +23,12 @@ export function WishlistProvider({ children }) {
     async function fetchWishlist() {
       try {
         const res = await apiGetWishlist();
-        setWishlist(res.data.data || []);
+        if(res.status === 403) {
+          setLoading(false);
+          return;
+        }
+        const products = res?.data?.data?.products;
+        setWishlist(Array.isArray(products) ? products : []);
       } catch (error) {
         console.error("Failed to fetch wishlist:", error);
       } finally {
@@ -33,28 +38,32 @@ export function WishlistProvider({ children }) {
     fetchWishlist();
   }, []);
 
-  // Add item to wishlist
   const addToWishlist = async (product) => {
-    if (!isLoggedIn) {
-      alert("Please login to save items to your wishlist!");
+    const token = localStorage.getItem("token"); // Fresh check
+    if (!token) {
+      alert("Please login to save items!");
       return;
     }
-    try {
-      // Check if product already exists
-      if (wishlist.find((item) => item.id === product.id)) return;
+    
+    // Prevent duplicate API calls if already in local state
+    if (wishlist.some((item) => item.productId === product.productId)) return;
 
+    try {
       await apiAddToWishlist(product);
-      setWishlist([...wishlist, product]);
+      setWishlist(prev => [...prev, product]); // Functional update is safer
     } catch (error) {
-      console.error("Add to wishlist failed:", error);
+      console.error("Add failed:", error);
     }
   };
-
   // Remove item from wishlist
   const removeFromWishlist = async (productId) => {
     try {
       await apiRemoveFromWishlist(productId);
-      setWishlist(wishlist.filter((item) => item.id !== productId));
+     setWishlist(prev =>
+      Array.isArray(prev)
+        ? prev.filter(item => item.productId !== productId)
+        : []
+    );
     } catch (error) {
       console.error("Remove from wishlist failed:", error);
     }

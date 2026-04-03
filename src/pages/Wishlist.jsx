@@ -1,75 +1,106 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Trash2, ShoppingCart } from "lucide-react";
-// Import the specific methods you just defined
-import { getWishlist, removeFromWishlist } from "../services/api"; 
 import { CartContext } from "../context/CartContext";
+import { WishlistContext } from "../context/WishlistContext";
 
 function Wishlist() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { wishlist, loading, removeFromWishlist } = useContext(WishlistContext);
   const { addToCart } = useContext(CartContext);
 
-  useEffect(() => {
-    loadWishlist();
-  }, []);
+  // Track loading per item
+  const [processingId, setProcessingId] = useState(null);
 
-  const loadWishlist = async () => {
+  const handleMoveToCart = async (item) => {
     try {
-      const res = await getWishlist();
-      // Accessing data based on your Response DTO structure { message, data }
-      setItems(res.data.data?.products || []); 
-    } catch (err) {
-      console.error("Failed to load wishlist:", err);
+      setProcessingId(item.productId);
+
+      const formattedItem = {
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        qty: 1,
+      };
+
+      await addToCart(formattedItem);
+      await removeFromWishlist(item.productId);
     } finally {
-      setLoading(false);
+      setProcessingId(null);
     }
   };
 
-  const handleRemove = async (productId) => {
+  const handleRemove = async (id) => {
     try {
-      await removeFromWishlist(productId);
-      // Optimistic update: remove from local state immediately
-      setItems(items.filter(item => item.productId !== productId));
-    } catch (err) {
-      alert("Could not remove item. Please try again.");
+      setProcessingId(id);
+      await removeFromWishlist(id);
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  const handleMoveToCart = (item) => {
-    addToCart({ ...item, id: item.productId, qty: 1 });
-    handleRemove(item.productId);
-  };
-
-  if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+  // Page Loader
+  if (loading) {
+    return (
+      <div className="loader-container">
+        <div className="loader"></div>
+        <p>Loading your wishlist...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="wishlist-container">
       <h2 className="section-title">My Favorites</h2>
-      
-      {items.length === 0 ? (
+
+      {!wishlist || wishlist.length === 0 ? (
         <div className="empty-cart">
           <Heart size={80} color="#ddd" strokeWidth={1} />
           <h2>Your wishlist is empty</h2>
           <p>Tap the heart on any hamper to save it for later!</p>
-          <Link to="/" className="auth-btn" style={{ width: '200px' }}>Explore Hampers</Link>
+          <Link to="/" className="auth-btn" style={{ width: "200px" }}>
+            Explore Hampers
+          </Link>
         </div>
       ) : (
         <div className="wishlist-grid">
-          {items.map((item) => (
+          {wishlist.map((item) => (
             <div key={item.productId} className="wishlist-card">
               <div className="wishlist-image">
                 <img src={item.image} alt={item.name} />
-                <button className="delete-icon" onClick={() => handleRemove(item.productId)}>
-                  <Trash2 size={18} />
+
+                <button
+                  className="delete-icon"
+                  onClick={() => handleRemove(item.productId)}
+                  disabled={processingId === item.productId}
+                >
+                  {processingId === item.productId ? (
+                    <div className="btn-loader small"></div>
+                  ) : (
+                    <Trash2 size={18} />
+                  )}
                 </button>
               </div>
+
               <div className="wishlist-details">
                 <h4>{item.name}</h4>
                 <p className="item-price">₹{item.price}</p>
-                <button className="move-to-cart-btn" onClick={() => handleMoveToCart(item)}>
-                  <ShoppingCart size={18} /> Move to Cart
-                </button>
+
+                <button
+                className="move-to-cart-btn"
+                onClick={() => handleMoveToCart(item)}
+                disabled={processingId === item.productId}
+              >
+                <span className="btn-content">
+                  {processingId === item.productId ? (
+                    <div className="btn-loader"></div>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} /> Move to Cart
+                    </>
+                  )}
+                </span>
+              </button>
               </div>
             </div>
           ))}

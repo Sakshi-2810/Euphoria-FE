@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Phone, ArrowRight } from "lucide-react";
-import api from "../services/api"; // Your axios instance
+import * as api from "../services/api"; // Your axios instance
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 function Signup() {
   const navigate = useNavigate();
-
+  const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,16 +29,12 @@ function Signup() {
 
     try {
       // Call backend signup API
-      const res = await api.post("/auth/signup", formData);
+      const res = await api.signupUser(formData);
 
       // Assuming backend returns JWT & user data
       const { token, user } = res.data.data;
-
-      // Save user info & token
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
-
-      navigate("/profile"); // Redirect to profile after signup
+      login(user, token); // This updates the global state immediately
+      navigate("/profile");
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Signup failed");

@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
-import { getProducts } from "../services/api";
+import * as api from "../services/api";
 
 function CategoryPage() {
   const { name } = useParams(); // category name from URL
@@ -13,7 +13,12 @@ function CategoryPage() {
       setLoading(true);
       try {
         // Fetch all products filtered by category
-        const res = await getProducts({ category: name.toLowerCase() });
+        let res;
+        if(name === "ALL") {
+          res = await api.getProducts();
+        } else {
+          res = await api.getProductsByCategory(name);
+        }
         setProducts(res.data.data || []);
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -35,7 +40,7 @@ function CategoryPage() {
       ) : (
         <div className="product-grid">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.productId} product={product} />
           ))}
         </div>
       )}

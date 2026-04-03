@@ -27,22 +27,12 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Occasions */}
-        <div className="footer-section">
-          <h4>Occasions</h4>
-          <ul>
-            <li>Birthday Hampers</li>
-            <li>Anniversary Gifts</li>
-            <li>Wedding Specials</li>
-          </ul>
-        </div>
-
         {/* Contact Info */}
         <div className="footer-section contact-details">
           <h4>Contact Us</h4>
-          <p><Phone size={16} /> +91 98765 43210</p>
-          <p><Mail size={16} /> support@hampers.com</p>
-          <p><MapPin size={16} /> 123 Gift Lane, Mumbai, India</p>
+          <p><Phone size={16} /> +91 **********</p>
+          <p><Mail size={16} /> euphoriahamperofficial@gmail.com</p>
+          <p><MapPin size={16} /> Jabalpur, India</p>
         </div>
       </div>
 

@@ -19,7 +19,7 @@ function Home() {
         setCategories(categoriesRes.data.data || []);
 
         const trendingRes = await getTrendingProducts(6);
-        setTrendingHampers(trendingRes.data || []);
+        setTrendingHampers(trendingRes.data.data || []);
 
         setLoading(false);
       } catch (error) {
@@ -40,7 +40,7 @@ function Home() {
         <div className="hero-content">
           <h1>Curated Hampers for <br /><span>Memorable Moments</span></h1>
           <p>Handpicked gifts delivered to your doorstep.</p>
-          <button className="shop-now-btn" onClick={() => navigate('/category/all')}>
+          <button className="shop-now-btn" onClick={() => navigate('/category/ALL')}>
             Explore Collection <ArrowRight size={20} />
           </button>
         </div>
@@ -52,9 +52,9 @@ function Home() {
         <div className="categories-container">
           {categories.map((cat) => (
             <CategoryCard
-              key={cat.id}
+              key={cat.name}
               category={cat}
-              onClick={() => navigate(`/category/${cat.name.toLowerCase()}`)}
+              onClick={() => navigate(`/category/${cat.name}`)}
             />
           ))}
         </div>
@@ -70,7 +70,7 @@ function Home() {
         </div>
         <div className="product-grid">
           {trendingHampers.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.productId} product={product} />
           ))}
         </div>
       </section>

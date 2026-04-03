@@ -1,185 +1,376 @@
-import React, { useState } from "react";
-import api from "../services/api"; // Axios instance pointing to your backend
+import React, { useState, useEffect } from "react";
+import * as api from "../services/api";
+import { 
+  Trash2, 
+  Edit, 
+  PlusCircle, 
+  List, 
+  Package, 
+  X, 
+  CheckCircle, 
+  AlertCircle,Shield,Tag,
+  Image as ImageIcon
+} from "lucide-react";
 
 function AdminPanel() {
-  // State for Category Form
-  const [category, setCategory] = useState({ name: "", image: "" });
-  const [catLoading, setCatLoading] = useState(false);
-  const [catMessage, setCatMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("add"); // "add", "view-cats", "view-prods"
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: "", type: "" }); // type: "success" or "error"
 
-  // State for Product Form
-  const [product, setProduct] = useState({
+  // Data States
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+
+  // Form States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+
+  const [categoryForm, setCategoryForm] = useState({ name: "", image: "", active: true });
+  const [productForm, setProductForm] = useState({
     name: "",
     description: "",
     price: "",
-    category: "",
-    imageUrl: "",
+    category: [],
+    image: "",
     gallery: "",
     videoUrl: "",
-    tags: "",
+    tags: ""
   });
-  const [prodLoading, setProdLoading] = useState(false);
-  const [prodMessage, setProdMessage] = useState("");
 
-  // Handlers
-  const handleCategoryChange = (e) => {
-    setCategory({ ...category, [e.target.name]: e.target.value });
-  };
-
-  const handleProductChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
-  };
-
-  const submitCategory = async (e) => {
-    e.preventDefault();
-    setCatLoading(true);
-    setCatMessage("");
+  // Fetch initial data
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  const fetchData = async () => {
     try {
-      const res = await api.post("/categories", category);
-      setCatMessage("Category added successfully!");
-      setCategory({ name: "", image: "" });
+      const [catRes, prodRes] = await Promise.all([
+        api.getCategories(),
+        api.getProducts(),
+      ]);
+      setCategories(catRes.data.data || catRes.data || []);
+      setAllCategories([{ name: "TRENDING" }, ...catRes.data.data|| ["TRENDING"]]); // For category selection in product form
+      
+      setProducts(prodRes.data.data || prodRes.data || []);
     } catch (err) {
-      setCatMessage(err.response?.data?.message || "Failed to add category");
-    } finally {
-      setCatLoading(false);
+      showStatus("Failed to load data from server", "error");
     }
   };
 
-  const submitProduct = async (e) => {
+  const showStatus = (text, type) => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: "", type: "" }), 4000);
+  };
+
+  // --- Category Handlers ---
+  const handleCategorySubmit = async (e) => {
     e.preventDefault();
-    setProdLoading(true);
-    setProdMessage("");
+    setLoading(true);
     try {
-      // Split gallery and tags by comma
-      const payload = {
-        ...product,
-        price: parseFloat(product.price),
-        gallery: product.gallery.split(",").map((g) => g.trim()),
-        tags: product.tags.split(",").map((t) => t.trim()),
-      };
-      const res = await api.post("/products", payload);
-      setProdMessage("Product added successfully!");
-      setProduct({
-        name: "",
-        description: "",
-        price: "",
-        category: "",
-        imageUrl: "",
-        gallery: "",
-        videoUrl: "",
-        tags: "",
-      });
+      await api.editCategory(categoryForm);
+      showStatus("Category created successfully!", "success");
+      setCategoryForm({ name: "", image: "", active: true });
+      fetchData();
     } catch (err) {
-      setProdMessage(err.response?.data?.message || "Failed to add product");
+      showStatus("Error creating category", "error");
     } finally {
-      setProdLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const deleteCategory = async (id, name) => {
+    if (!window.confirm(`Delete category "${name}"? This may affect products.`)) return;
+    try {
+      await api.deleteCategory(id);
+      showStatus("Category deleted", "success");
+      fetchData();
+    } catch (err) {
+      showStatus("Could not delete category", "error");
+    }
+  };
+
+  // --- Product Handlers ---
+  const startEditProduct = (prod) => {
+    setIsEditing(true);
+    setEditId(prod.productId);
+    setActiveTab("add");
+    setProductForm({
+      name: prod.name,
+      description: prod.description,
+      price: prod.price,
+      category: prod.category || [],
+      image: prod.image,
+      gallery: prod.gallery?.join(", ") || "",
+      videoUrl: prod.videoUrl || "",
+      tags: prod.tags?.join(", ") || ""
+    });
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setProductForm({ name: "", description: "", price: "", category: "", image: "", gallery: "", videoUrl: "", tags: ""});
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const payload = {
+      ...productForm,
+      price: parseFloat(productForm.price),
+      gallery: productForm.gallery.split(",").map((g) => g.trim()).filter(g => g !== ""),
+      tags: productForm.tags.split(",").map(t => t.trim()).filter(t => t !== ""),
+      productId: isEditing ? editId : undefined
+    };
+
+    try {
+      await api.postProduct(payload);
+      showStatus(isEditing ? "Updated!" : "Launched!", "success");
+      cancelEdit();
+      fetchData();
+    } catch (err) {
+      showStatus("Operation failed. Check your data.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Permanent delete this product?")) return;
+    try {
+      await api.deleteProduct(id);
+      showStatus("Product removed", "success");
+      fetchData();
+    } catch (err) {
+      showStatus("Error deleting product", "error");
     }
   };
 
   return (
-    <div className="admin-container">
-      <h1>Admin Panel</h1>
-
-      <div className="admin-forms">
-        {/* Add Category Form */}
-        <div className="form-card">
-          <h2>Add Category</h2>
-          <form onSubmit={submitCategory}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Category Name"
-              value={category.name}
-              onChange={handleCategoryChange}
-              required
-            />
-            <input
-              type="text"
-              name="image"
-              placeholder="Image URL"
-              value={category.image}
-              onChange={handleCategoryChange}
-              required
-            />
-            <button type="submit" disabled={catLoading}>
-              {catLoading ? "Adding..." : "Add Category"}
-            </button>
-            {catMessage && <p className="message">{catMessage}</p>}
-          </form>
+    <div className="admin-dashboard">
+      {/* Sidebar Navigation */}
+      <aside className="admin-sidebar">
+        <div className="sidebar-header">
+          <Shield size={24} color="#ff3366" />
+          <h2>Euphoria Admin</h2>
         </div>
+        <nav className="admin-nav">
+          <button className={activeTab === "add" ? "active" : ""} onClick={() => setActiveTab("add")}>
+            <PlusCircle size={20} /> {isEditing ? "Editing Item" : "Add New"}
+          </button>
+          <button className={activeTab === "view-cats" ? "active" : ""} onClick={() => setActiveTab("view-cats")}>
+            <List size={20} /> Manage Categories
+          </button>
+          <button className={activeTab === "view-prods" ? "active" : ""} onClick={() => setActiveTab("view-prods")}>
+            <Package size={20} /> Manage Products
+          </button>
+        </nav>
+      </aside>
 
-        {/* Add Product Form */}
-        <div className="form-card">
-          <h2>Add Product</h2>
-          <form onSubmit={submitProduct}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Product Name"
-              value={product.name}
-              onChange={handleProductChange}
-              required
-            />
-            <input
-              type="text"
-              name="description"
-              placeholder="Description"
-              value={product.description}
-              onChange={handleProductChange}
-              required
-            />
-            <input
-              type="number"
-              name="price"
-              placeholder="Price"
-              value={product.price}
-              onChange={handleProductChange}
-              required
-            />
-            <input
-              type="text"
-              name="category"
-              placeholder="Category Name"
-              value={product.category}
-              onChange={handleProductChange}
-              required
-            />
-            <input
-              type="text"
-              name="imageUrl"
-              placeholder="Main Image URL"
-              value={product.imageUrl}
-              onChange={handleProductChange}
-              required
-            />
-            <input
-              type="text"
-              name="gallery"
-              placeholder="Gallery URLs (comma separated)"
-              value={product.gallery}
-              onChange={handleProductChange}
-            />
-            <input
-              type="text"
-              name="videoUrl"
-              placeholder="Video URL (optional)"
-              value={product.videoUrl}
-              onChange={handleProductChange}
-            />
-            <input
-              type="text"
-              name="tags"
-              placeholder="Tags (comma separated)"
-              value={product.tags}
-              onChange={handleProductChange}
-            />
-            <button type="submit" disabled={prodLoading}>
-              {prodLoading ? "Adding..." : "Add Product"}
-            </button>
-            {prodMessage && <p className="message">{prodMessage}</p>}
-          </form>
-        </div>
-      </div>
+      {/* Main Content Area */}
+      <main className="admin-content">
+        {message.text && (
+          <div className={`status-toast ${message.type}`}>
+            {message.type === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            {message.text}
+          </div>
+        )}
+
+        {/* TAB: ADD / EDIT FORM */}
+        {activeTab === "add" && (
+          <div className="admin-forms-container anim-fade-in">
+            <header className="content-header">
+              <h1>{isEditing ? "Modify Product" : "Inventory Management"}</h1>
+              <p>Create and update your store collection</p>
+            </header>
+
+            <div className="forms-grid">
+              {/* Category Form */}
+              {!isEditing && (
+                <section className="form-card">
+                  <h3><PlusCircle size={18} /> New Category</h3>
+                  <form onSubmit={handleCategorySubmit} className="admin-form">
+                    <div className="field">
+                      <label>Category Name</label>
+                      <input type="text" placeholder="e.g. Birthday" value={categoryForm.name} onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})} required />
+                    </div>
+                    <div className="field">
+                      <label>Image URL</label>
+                      <input type="text" placeholder="https://..." value={categoryForm.image} onChange={(e) => setCategoryForm({...categoryForm, image: e.target.value})} required />
+                    </div>
+                    <button type="submit" className="btn-primary" disabled={loading}>Create Category</button>
+                  </form>
+                </section>
+              )}
+
+              {/* Product Form */}
+              <section className="form-card product-card-form">
+                <h3><Package size={18} /> {isEditing ? "Edit Details" : "Launch Product"}</h3>
+                <form onSubmit={handleProductSubmit} className="admin-form">
+                  <div className="input-row">
+                    <div className="field">
+                      <label>Product Title</label>
+                      <input type="text" value={productForm.name} onChange={(e) => setProductForm({...productForm, name: e.target.value})} required />
+                    </div>
+                    <div className="field">
+                      <label>Price (₹)</label>
+                      <input type="number" value={productForm.price} onChange={(e) => setProductForm({...productForm, price: e.target.value})} required />
+                    </div>
+                  </div>
+
+                  <div className="field">
+                    <label>Main Category</label>
+                    <div className="field">
+                    <label>Target Categories (Select Multiple)</label>
+                    <div className="category-checkbox-grid">
+                      {allCategories.map((c) => (
+                        <label key={c.name} className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={productForm.category.includes(c.name)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const currentCats = [...productForm.category];
+                              if (checked) {
+                                setProductForm({ ...productForm, category: [...currentCats, c.name] });
+                              } else {
+                                setProductForm({ 
+                                  ...productForm, 
+                                  category: currentCats.filter((name) => name !== c.name) 
+                                });
+                              }
+                            }}
+                          />
+                          <span>{c.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  </div>
+
+                  <div className="field">
+                    <label>Primary Image URL</label>
+                    <input type="text" value={productForm.image} onChange={(e) => setProductForm({...productForm, image: e.target.value})} required />
+                  </div>
+
+                  <div className="field">
+                    <label>Full Description</label>
+                    <textarea value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} />
+                  </div>
+                  {/* ✅ Added Tags Field */}
+                  <div className="field">
+                    <label><Tag size={14} style={{ marginBottom: '-2px', marginRight: '4px' }}/> Tags (Comma Separated)</label>
+                    <input 
+                      type="text" 
+                      value={productForm.tags} 
+                      onChange={(e) => setProductForm({...productForm, tags: e.target.value})} 
+                      placeholder="BestSeller, NewArrival, Luxury..." 
+                    />
+                  </div>
+
+                  <div className="input-row">
+                    <div className="field">
+                      <label>Gallery Images (comma separated)</label>
+                      <input type="text" value={productForm.gallery} onChange={(e) => setProductForm({...productForm, gallery: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                      {isEditing ? "Update Product" : "Add to Store"}
+                    </button>
+                    {isEditing && (
+                      <button type="button" className="btn-secondary" onClick={cancelEdit}>
+                        <X size={16} /> Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: MANAGE CATEGORIES */}
+        {activeTab === "view-cats" && (
+          <div className="table-view anim-fade-in">
+            <header className="content-header">
+              <h1>Category List</h1>
+              <p>View and remove product categories</p>
+            </header>
+            <div className="card-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map(cat => (
+                    <tr key={cat.name}>
+                      <td><div className="img-box"><img src={cat.image} alt="" /></div></td>
+                      <td className="bold">{cat.name}</td>
+                      <td>
+                        <button className="icon-btn delete" onClick={() => deleteCategory(cat.name)}>
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: MANAGE PRODUCTS */}
+        {activeTab === "view-prods" && (
+          <div className="table-view anim-fade-in">
+             <header className="content-header">
+              <h1>Product Catalog</h1>
+              <p>Manage existing items and pricing</p>
+            </header>
+            <div className="card-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(prod => (
+                    <tr key={prod.productId}>
+                      <td><div className="img-box"><img src={prod.image} alt="" /></div></td>
+                      <td>
+                        <div className="prod-name-cell">
+                          <span className="bold">{prod.name}</span>
+                          <span className="sub-text">{prod.productId?.substring(0, 8)}...</span>
+                        </div>
+                      </td>
+                      <td className="bold">₹{prod.price}</td>
+                      <td><span className="cat-pill">{prod.category?.[0]}</span></td>
+                      <td>
+                        <div className="action-cell">
+                          <button className="icon-btn edit" onClick={() => startEditProduct(prod)}><Edit size={18} /></button>
+                          <button className="icon-btn delete" onClick={() => deleteProduct(prod.productId)}><Trash2 size={18} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

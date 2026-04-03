@@ -29,7 +29,7 @@ function Cart() {
         <h2 className="section-title">Shopping Cart ({cart.length} Items)</h2>
         
         {items.map((item) => (
-          <div key={item.id} className="cart-item-card">
+          <div key={item.productId} className="cart-item-card">
             <div className="cart-item-image">
               <img src={item.image} alt={item.name} />
             </div>
@@ -42,18 +42,18 @@ function Cart() {
               <div className="cart-item-actions">
                 {/* Quantity Controller */}
                 <div className="qty-selector">
-                  <button onClick={() => updateQty(item.id, (item.qty || 1) - 1)}>
+                  <button onClick={() => updateQty(item.productId, (item.qty || 1) - 1)}>
                     <Minus size={14} />
                   </button>
                   <span>{item.qty || 1}</span>
-                  <button onClick={() => updateQty(item.id, (item.qty || 1) + 1)}>
+                  <button onClick={() => updateQty(item.productId, (item.qty || 1) + 1)}>
                     <Plus size={14} />
                   </button>
                 </div>
 
                 <button 
                   className="remove-btn" 
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => removeFromCart(item.productId)}
                 >
                   <Trash2 size={16} /> Remove
                 </button>

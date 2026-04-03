@@ -3,9 +3,26 @@ import { useContext, useState, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
 import { ShoppingCart, Heart, Truck, ShieldCheck, Star, PlayCircle } from "lucide-react";
 import { getProductById, addToWishlist } from "../services/api"; // Reuse your service file!
+import { WishlistContext } from "../context/WishlistContext";
 
 function ProductDetails() {
-  const { id } = useParams();
+  const { wishlist, addToWishlist, removeFromWishlist } = useContext(WishlistContext);
+  const { productId } = useParams();
+  
+  const isInWishlist = wishlist?.some(item => item.productId === productId);
+
+  const handleWishlist = async () => {
+    if (isInWishlist) {
+      await removeFromWishlist(productId);
+    } else {
+      await addToWishlist({ 
+        productId: product.productId, 
+        name: product.name, 
+        price: product.price, 
+        image: product.image || product.media[0]?.url 
+      });
+    }
+  };
   const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
 
@@ -20,7 +37,7 @@ function ProductDetails() {
       setLoading(true);
       setError("");
       try {
-        const res = await getProductById(id);
+        const res = await getProductById(productId);
         // FIX: Accessing the 'data' field inside your Response object
         const productData = res.data.data; 
         
@@ -39,28 +56,12 @@ function ProductDetails() {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [productId]);
 
   const handleAddToCart = () => {
     // FIX: Send specific fields or the whole object based on your Context needs
     addToCart({ ...product, qty });
     navigate("/cart");
-  };
-
-  const handleWishlist = async () => {
-    try {
-      // Reusing your Wishlist API
-      await addToWishlist({ 
-        productId: product.id, 
-        name: product.name, 
-        price: product.price, 
-        image: product.image || product.media[0]?.url 
-      });
-      alert("Added to wishlist!");
-    } catch (err) {
-      alert("Please login to use the wishlist.");
-      navigate("/login");
-    }
   };
 
   if (loading) return <div className="loader-container"><div className="loader"></div></div>;
@@ -135,7 +136,8 @@ function ProductDetails() {
             <ShoppingCart size={20} /> ADD TO CART
           </button>
           <button className="wishlist-btn" onClick={handleWishlist}>
-            <Heart size={20} /> WISHLIST
+            <Heart size={20} fill={isInWishlist ? "red" : "none"} />
+            {isInWishlist ? "REMOVE" : "WISHLIST"}
           </button>
         </div>
 

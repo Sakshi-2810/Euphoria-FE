@@ -2,50 +2,74 @@ import { useContext, useState } from "react";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 import { useNavigate } from "react-router-dom";
+import { Heart, ShoppingCart } from "lucide-react";
 
-function ProductCard({ product }) {
-  const { addToCart } = useContext(CartContext);
-  const { addToWishlist } = useContext(WishlistContext);
+function ProductCard({ product }) {  
+  // ✅ FIX 1: Destructure 'wishlist' (not 'items') and 'removeFromWishlist'
+  const { addToWishlist, wishlist = [], removeFromWishlist } = useContext(WishlistContext);
+  
   const navigate = useNavigate();
 
-  const [addingCart, setAddingCart] = useState(false);
-  const [addingWishlist, setAddingWishlist] = useState(false);
+  const isInWishlist =
+  Array.isArray(wishlist) &&
+  wishlist.some(
+    item => item.productId === product.productId || item.productId === product.productId
+  );
 
-  const handleAddToCart = async () => {
-    setAddingCart(true);
-    try {
-      await addToCart(product);
-    } finally {
-      setAddingCart(false);
-    }
-  };
-
-  const handleAddToWishlist = async () => {
-    setAddingWishlist(true);
-    try {
-      await addToWishlist(product);
-    } finally {
-      setAddingWishlist(false);
+  const handleWishlistToggle = async (e) => {
+    e.stopPropagation();
+    console.log("Wishlist toggle for product:", product);
+    // ✅ Logic: No local API calls. The Context functions handle the API internally.
+    if (isInWishlist) {
+      await removeFromWishlist(product.productId);
+    } else {
+      await addToWishlist({
+        productId: product.productId,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      });
     }
   };
 
   return (
-    <div className="card">
-      <img
-        src={product.image}
-        alt={product.name}
-        onClick={() => navigate(`/product/${product.id}`)}
-        style={{ cursor: "pointer" }}
-      />
-      <h4>{product.name}</h4>
-      <p>₹{product.price}</p>
+    <div className="card product-card anim-fade-in" onClick={() => navigate(`/product/${product.productId}`)}>
+      <div className="product-image-wrapper">
+        <img
+          src={product.image} 
+          alt={product.name}
+          onError={(e) => { e.target.src = 'https://via.placeholder.com/200?text=No+Image'; }}
+        />
+        <button 
+          className={`wishlist-overlay ${isInWishlist ? 'active' : ''}`} 
+          onClick={handleWishlistToggle}
+          type="button"
+        >
+          <Heart 
+            size={18} 
+            fill={isInWishlist ? "#ff3366" : "none"} 
+            color={isInWishlist ? "#ff3366" : "#666"} 
+          />
+        </button>
+      </div>
 
-      <button onClick={handleAddToCart} disabled={addingCart}>
-        {addingCart ? "Adding..." : "Add to Cart"}
-      </button>
-      <button onClick={handleAddToWishlist} disabled={addingWishlist}>
-        {addingWishlist ? "Adding..." : "❤️"}
-      </button>
+    <div className="product-info">
+  <h4 className="product-title">{product.name}</h4>
+
+  <div className="price-row">
+    <span className="price">₹{product.price}</span>
+    {product.originalPrice && (
+      <span className="old-price">₹{product.originalPrice}</span>
+    )}
+    {product.discount && (
+      <span className="discount">{product.discount}% OFF</span>
+    )}
+  </div>
+
+  <p className="desc">
+    {product.description || "No description available"}
+  </p>
+</div>
     </div>
   );
 }

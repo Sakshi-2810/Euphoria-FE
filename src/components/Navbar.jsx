@@ -1,18 +1,20 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react"; 
+import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { Search, ShoppingCart, User, Heart, Shield } from "lucide-react";
+import { useState } from "react";
 
 function Navbar() {
   const { cart } = useContext(CartContext);
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user } = useContext(AuthContext);
+const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
-  }, []);
-
+const handleSearch = () => {
+  if (!searchTerm.trim()) return;
+  navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
+};
   const handleAdminRedirect = () => {
     navigate("/admin"); // Admin panel route
   };
@@ -25,8 +27,16 @@ function Navbar() {
 
         {/* Search Bar */}
         <div className="search-container">
-          <input type="text" placeholder="Search for gifts, cakes, hampers..." />
-          <button className="search-btn"><Search size={18} /></button>
+          <input
+            type="text"
+            placeholder="Search for gifts, cakes, hampers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button className="search-btn" onClick={handleSearch}>
+            <Search size={18} />
+          </button>
         </div>
 
         {/* Action Links */}
@@ -48,7 +58,7 @@ function Navbar() {
           </Link>
 
           {/* Admin Button – Visible only to admins */}
-          {user?.role === "admin" && (
+          {user?.role === "ADMIN" && (
             <button
               className="admin-btn"
               onClick={handleAdminRedirect}
