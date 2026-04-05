@@ -352,6 +352,11 @@ body {
   justify-content: center;
   align-items: center;
 }
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* ================= Hero ================= */
 /* Hero Banner Styling */
 .hero-banner {
@@ -598,7 +603,7 @@ body {
   margin: 40px auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 50px;
+  gap: 40px;
   padding: 20px;
   animation: fadeInUp 0.8s ease;
 }
@@ -991,7 +996,9 @@ button:last-of-type {
   justify-content: center;
   gap: 10px;
   margin-top: 10px;
-  transition: background 0.3s;
+  min-height: 50px;
+  width: 100%;
+  transition: all 0.3s ease;
 }
 
 .auth-btn:hover {
@@ -1084,6 +1091,7 @@ button:last-of-type {
   background: #fff0f3;
   box-shadow: 0 8px 20px rgba(255, 51, 102, 0.15);
   transform: scale(1.02);
+  background-color: #fff9fa !important;
 }
 
 /* Slight hover enhancement */
@@ -1418,14 +1426,42 @@ button:last-of-type {
 }
 
 /* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .main-media-display {
+    height: auto;        /* ✅ remove fixed height */
+    max-height: 300px;   /* ✅ control size */
+  }
+
+  .main-media-display img,
+  .main-media-display video {
+    height: auto;
+    max-height: 300px;
+    object-fit: contain; /* ✅ prevents cropping */
+  }
+}
 
 @media (max-width: 900px) {
   .profile-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Stack into one column */
+    gap: 20px;
   }
 
   .profile-sidebar {
-    display: none; /* Optional: hide sidebar on mobile */
+    display: block; /* Change from 'none' to 'block' */
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Optional: Make the menu items flow horizontally on tiny screens */
+  .profile-menu {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  
+  .menu-item {
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 }
 
@@ -1601,13 +1637,23 @@ button:last-of-type {
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.3s;
   flex: 1;
+  position: relative;
+  min-height: 48px; /* Prevents height jump when loader appears */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
   background: #e62e5c;
   transform: translateY(-2px);
+}
+.btn-primary:disabled {
+  background: #ff85a2; /* Lighter shade of your brand color */
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .btn-secondary {
@@ -1695,7 +1741,13 @@ button:last-of-type {
 
 .icon-btn.edit { color: #4e73df; }
 .icon-btn.edit:hover { background: #ebf0ff; }
-.icon-btn.delete { color: #e74a3b; }
+.icon-btn.delete { color: #e74a3b; position: relative;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;}
 .icon-btn.delete:hover { background: #fff5f5; }
 
 /* Status Toast */
@@ -1800,6 +1852,9 @@ button:last-of-type {
 .wishlist-details {
   padding: 15px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .wishlist-details h4 {
@@ -1808,6 +1863,7 @@ button:last-of-type {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 8px;
+  text-align: center;
 }
 .move-to-cart-btn {
   width: 100%; /* 🔥 lock full width */
@@ -1815,6 +1871,7 @@ button:last-of-type {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 
 /* Keep content centered */
@@ -1822,7 +1879,7 @@ button:last-of-type {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
 }
 
 /* Loader fix */
@@ -1832,14 +1889,27 @@ button:last-of-type {
   border: 2px solid #fff;
   border-top: 2px solid transparent;
   border-radius: 50%;
+  display: inline-block;
   animation: spin 0.7s linear infinite;
+}
+.icon-btn.loading {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 /* Smaller loader (for delete icon) */
 .btn-loader.small {
-  width: 14px;
-  height: 14px;
-  border-width: 2px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(231, 74, 59, 0.2); /* Faded red border */
+  border-top: 2px solid #e74a3b;          /* Solid red top */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }
 /* Add Address */
 
@@ -2102,6 +2172,11 @@ button:last-of-type {
     position: relative;
     top: 0;
   }
+    .thumbnails-list {
+    flex-direction: row;       /* ✅ horizontal on mobile */
+    overflow-x: auto;          /* ✅ scroll instead of overflow */
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 600px) {
@@ -2300,6 +2375,8 @@ button:last-of-type {
 
   .product-gallery {
     flex-direction: column;
+    position: static; /* ❌ remove sticky */
+    width: 100%;
   }
 
   /* Profile */
@@ -2307,9 +2384,6 @@ button:last-of-type {
     grid-template-columns: 1fr;
   }
 
-  .profile-sidebar {
-    display: none;
-  }
 }
 
 @media (max-width: 600px) {
@@ -2461,3 +2535,320 @@ html {
   display: flex;
   align-items: center;
 }
+
+/* Quantity Display Loader */
+.qty-display {
+  min-width: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Spinner variants for Cart */
+.btn-loader.dark {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: #333; /* Dark spinner for the white qty box */
+}
+
+.btn-loader.red {
+  border-color: rgba(255, 51, 102, 0.1);
+  border-top-color: #ff3366; /* Pink/Red spinner for remove button */
+}
+
+/* Optional: Slight fade for the card being processed */
+.item-processing {
+  opacity: 0.7;
+  pointer-events: none; /* Block all clicks on the card while loading */
+}
+
+/* Ensure remove button doesn't jump */
+.remove-btn {
+  min-width: 90px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Container for the whole page transition */
+.products-page {
+  min-height: 80vh;
+}
+
+/* Skeleton Card Structure */
+.product-card-skeleton {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.image-skeleton {
+  width: 100%;
+  height: 200px; /* Matches your ProductCard image height */
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.text-skeleton {
+  background: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.text-skeleton.title {
+  width: 80%;
+  height: 18px;
+}
+
+.text-skeleton.price {
+  width: 40%;
+  height: 16px;
+}
+
+.text-skeleton.small {
+  width: 100px;
+  height: 14px;
+}
+
+/* Shimmer Animation (if not already defined) */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #f6f7f8;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer-effect 2s infinite;
+}
+
+@keyframes shimmer-effect {
+  100% {
+    transform: translateX(100%);
+  }
+}
+/* Hero Skeleton */
+.hero-skeleton {
+  width: 100%;
+  height: 450px;
+  background: #f0f0f0;
+  margin-bottom: 40px;
+}
+
+/* Category Specific Skeletons */
+.category-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 120px;
+}
+
+.category-circle-skeleton {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #f0f0f0;
+}
+
+/* Common Home Section Spacing */
+.home-wrapper {
+  overflow-x: hidden;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+/* Auth-specific Error box */
+.error-message {
+  background: #fff0f0;
+  color: #d63031;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  border: 1px solid #fab1a0;
+  animation: shake 0.4s ease-in-out;
+  text-align: center;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+
+
+.auth-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.google-btn {
+  background: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.google-btn:hover {
+  background: #f9f9f9;
+}
+/* Product Info Skeleton */
+.product-info-section .text-skeleton.desc {
+  height: 60px;
+  width: 100%;
+}
+
+/* Action Buttons Stability */
+.add-to-cart-btn, .wishlist-btn {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+/* Wishlist Active State */
+.wishlist-btn.active {
+  border-color: #ff3366;
+  color: #ff3366;
+}
+
+
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Main Media Display Skeleton */
+.main-media-skeleton {
+  width: 100%;
+  height: 550px;
+  background: #f0f0f0;
+  border-radius: 12px;
+}
+
+/* Thumbnail Skeleton */
+.thumb-skeleton {
+  width: 70px;
+  height: 80px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+/* Order Row Skeleton */
+.order-card.skeleton-row {
+  height: 80px;
+  background: #f0f0f0;
+  border: none;
+  margin-bottom: 15px;
+}
+
+/* Address Card Skeleton */
+.address-card-skeleton {
+  height: 160px;
+  background: #f0f0f0;
+  border-radius: 12px;
+}
+
+/* Action Buttons Container */
+.address-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Center the loader in the delete button */
+.delete-btn {
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Disable inputs visually when loading */
+.input-group input:disabled {
+  background-color: #f9f9f9;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #eee;
+}
+
+.move-to-cart-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Spinner for the dark-bordered remove icon */
+.delete-icon .animate-spin {
+  animation: spin 1s linear infinite;
+  color: #ff3366;
+}
+.cart-address-header {
+  position: relative;
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  grid-column: 1 / -1; /* This spans across both columns */
+  z-index: 10;
+}
+
+.delivery-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.address-dropdown-portal {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  z-index: 100;
+  border-radius: 0 0 8px 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.address-option-card {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.address-option-card:hover {
+  background: #f9f9f9;
+}
+
+.address-option-card.active {
+  background: #fff9f0;
+  border-left: 4px solid #e67e22; /* Use your primary theme color */
+}
+
+.rotate { transform: rotate(180deg); transition: 0.3s; }

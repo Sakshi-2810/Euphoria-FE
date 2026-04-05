@@ -201,11 +201,16 @@ function AddAddress() {
 
             {/* Submit */}
             <button type="submit" className="auth-btn" disabled={loading}>
-              {loading
-                ? "Saving..."
-                : isEdit
-                ? "Update Address"
-                : "Save Address"}
+              {loading ? (
+                <>
+                  <span className="btn-loader"></span>
+                  Saving...
+                </>
+              ) : isEdit ? (
+                "Update Address"
+              ) : (
+                "Save Address"
+              )}
             </button>
 
           </form>

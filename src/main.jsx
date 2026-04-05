@@ -8,12 +8,12 @@ import { AuthProvider } from "./context/AuthContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuthProvider>
-    <WishlistProvider>
-      <CartProvider>
-        <App />
-      </CartProvider>
-    </WishlistProvider>
-    </AuthProvider>
+    <CartProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          <App />
+        </WishlistProvider>
+      </AuthProvider>
+    </CartProvider>
   </React.StrictMode>
 );

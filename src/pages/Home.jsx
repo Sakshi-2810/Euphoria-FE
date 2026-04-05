@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import CategoryCard from "../components/CategoryCard";
-import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { getCategories, getTrendingProducts } from "../services/api";
 
@@ -15,15 +15,16 @@ function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const categoriesRes = await getCategories();
-        setCategories(categoriesRes.data.data || []);
+        const [categoriesRes, trendingRes] = await Promise.all([
+          getCategories(),
+          getTrendingProducts(6)
+        ]);
 
-        const trendingRes = await getTrendingProducts(6);
-        setTrendingHampers(trendingRes.data.data || []);
-
-        setLoading(false);
+        setCategories(categoriesRes.data.data || categoriesRes.data || []);
+        setTrendingHampers(trendingRes.data.data || trendingRes.data || []);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching homepage data:", error);
+      } finally {
         setLoading(false);
       }
     }
@@ -31,37 +32,46 @@ function Home() {
     fetchData();
   }, []);
 
- if (loading) {
+  // --- LOADING STATE (Skeleton Screen) ---
+  if (loading) {
+    return (
+      <div className="home-wrapper anim-fade-in">
+        {/* Hero Skeleton */}
+        <div className="hero-skeleton shimmer"></div>
+
+        {/* Categories Skeleton */}
+        <section className="home-section">
+          <div className="text-skeleton title shimmer" style={{ margin: '0 auto 30px' }}></div>
+          <div className="categories-container">
+            {Array(6).fill().map((_, i) => (
+              <div key={i} className="category-card-skeleton">
+                <div className="category-circle-skeleton shimmer"></div>
+                <div className="text-skeleton small shimmer"></div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Products Skeleton */}
+        <section className="home-section bg-light">
+          <div className="text-skeleton title shimmer" style={{ marginBottom: '30px' }}></div>
+          <div className="product-grid">
+            {Array(6).fill().map((_, i) => (
+              <div key={i} className="product-card-skeleton">
+                <div className="image-skeleton shimmer"></div>
+                <div className="text-skeleton title shimmer"></div>
+                <div className="text-skeleton price shimmer"></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // --- ACTUAL CONTENT ---
   return (
-    <div className="home-wrapper">
-      {/* Hero Skeleton */}
-      <div className="hero-skeleton shimmer"></div>
-
-      {/* Categories Skeleton */}
-      <section className="home-section">
-        <h2 className="section-title">Shop by Occasion</h2>
-        <div className="categories-container">
-          {Array(6).fill().map((_, i) => (
-            <div key={i} className="category-skeleton shimmer"></div>
-          ))}
-        </div>
-      </section>
-
-      {/* Products Skeleton */}
-      <section className="home-section bg-light">
-        <h2 className="section-title">Trending This Week</h2>
-        <div className="product-grid">
-          {Array(6).fill().map((_, i) => (
-            <div key={i} className="product-skeleton shimmer"></div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-  return (
-    <div className="home-wrapper">
+    <div className="home-wrapper anim-fade-in">
       {/* Hero Section */}
       <section className="hero-banner">
         <div className="hero-content">

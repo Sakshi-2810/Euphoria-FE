@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowRight, Chrome } from "lucide-react";
 import * as api from "../services/api";
-import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 function Login() {
@@ -17,42 +16,78 @@ function Login() {
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    if (error) setError(""); // Clear error when user starts typing again
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await api.loginUser(credentials);
-    const { token, user } = res.data.data;
-    login(user, token);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    // SYNC GUEST CART TO BACKEND
-    const guestCart = JSON.parse(localStorage.getItem("guest_cart")) || [];
-    if (guestCart.length > 0) {
-      for (const item of guestCart) {
-        await api.postToCart({ productId: item.productId, qty: item.qty, price: item.price, name: item.name, image: item.image });
-      }
-      localStorage.removeItem("guest_cart"); // Clear after sync
+    const { password } = credentials;
+
+    // ✅ Password validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      setError(
+        "Password must be at least 8 characters long and include at least one uppercase and one lowercase letter."
+      );
+      setLoading(false);
+      return;
     }
 
-    navigate("/profile");
-  } catch (err) {
-    console.log(err);
-    setError("Login failed");
-  }
-};
+    try {
+      const res = await api.loginUser(credentials);
+      const { token, user } = res.data.data;
+      
+      // Initialize auth state
+      login(user, token);
+
+      // SYNC GUEST CART TO BACKEND
+      const guestCart = JSON.parse(localStorage.getItem("guest_cart")) || [];
+      if (guestCart.length > 0) {
+        // We use for...of to ensure sequential syncing before navigation
+        for (const item of guestCart) {
+          try {
+            await api.postToCart({ 
+              productId: item.productId, 
+              qty: item.qty, 
+              price: item.price, 
+              name: item.name, 
+              image: item.image 
+            });
+          } catch (syncErr) {
+            console.error("Failed to sync item:", item.productId);
+          }
+        }
+        localStorage.removeItem("guest_cart"); 
+      }
+
+      navigate("/profile");
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = () => {
     // window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/google`;
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container anim-fade-in">
       <div className="auth-card">
         <h2>Welcome Back</h2>
         <p className="auth-subtitle">Login to access your orders and wishlist</p>
 
-        {error && <p className="error-text">{error}</p>}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
@@ -63,6 +98,7 @@ function Login() {
               placeholder="Email Address" 
               onChange={handleChange} 
               required 
+              disabled={loading}
             />
           </div>
 
@@ -74,6 +110,7 @@ function Login() {
               placeholder="Password" 
               onChange={handleChange} 
               required 
+              disabled={loading}
             />
           </div>
 
@@ -82,7 +119,16 @@ function Login() {
           </div>
 
           <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Logging in..." : "Login"} <LogIn size={18} />
+            {loading ? (
+              <div className="btn-content">
+                <span className="btn-loader"></span>
+                <span>Authenticating...</span>
+              </div>
+            ) : (
+              <>
+                Login <LogIn size={18} />
+              </>
+            )}
           </button>
         </form>
 
@@ -90,7 +136,11 @@ function Login() {
           <span>OR</span>
         </div>
 
-        <button className="auth-btn google-btn" onClick={handleGoogleLogin}>
+        <button 
+          className="auth-btn google-btn" 
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
           <Chrome size={18} /> Login with Google
         </button>
 

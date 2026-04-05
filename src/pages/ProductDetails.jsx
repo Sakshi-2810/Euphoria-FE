@@ -1,28 +1,21 @@
+import React, { useContext, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
-import { ShoppingCart, Heart, Truck, ShieldCheck, Star, PlayCircle } from "lucide-react";
-import { getProductById, addToWishlist } from "../services/api"; // Reuse your service file!
 import { WishlistContext } from "../context/WishlistContext";
+import { 
+  ShoppingCart, 
+  Heart, 
+  Truck, 
+  ShieldCheck, 
+  Star, 
+  PlayCircle,
+  Loader2 
+} from "lucide-react";
+import { getProductById } from "../services/api";
 
 function ProductDetails() {
   const { wishlist, addToWishlist, removeFromWishlist } = useContext(WishlistContext);
   const { productId } = useParams();
-  
-  const isInWishlist = wishlist?.some(item => item.productId === productId);
-
-  const handleWishlist = async () => {
-    if (isInWishlist) {
-      await removeFromWishlist(productId);
-    } else {
-      await addToWishlist({ 
-        productId: product.productId, 
-        name: product.name, 
-        price: product.price, 
-        image: product.image || product.media[0]?.url 
-      });
-    }
-  };
   const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
 
@@ -30,7 +23,11 @@ function ProductDetails() {
   const [mainMedia, setMainMedia] = useState(null);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const isInWishlist = wishlist?.some(item => item.productId === productId);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -38,14 +35,14 @@ function ProductDetails() {
       setError("");
       try {
         const res = await getProductById(productId);
-        // FIX: Accessing the 'data' field inside your Response object
         const productData = res.data.data; 
         
         setProduct(productData);
         
-        // FIX: Safe check for media array to prevent crash
         if (productData.media && productData.media.length > 0) {
           setMainMedia(productData.media[0]);
+        } else if (productData.image) {
+          setMainMedia({ url: productData.image, type: "image" });
         }
       } catch (err) {
         console.error("Failed to fetch product:", err);
@@ -58,47 +55,65 @@ function ProductDetails() {
     fetchProduct();
   }, [productId]);
 
-  const handleAddToCart = () => {
-    // FIX: Send specific fields or the whole object based on your Context needs
-    addToCart({ ...product, qty });
-    navigate("/cart");
+  const handleWishlist = async () => {
+    setWishlistLoading(true);
+    try {
+      if (isInWishlist) {
+        await removeFromWishlist(productId);
+      } else {
+        await addToWishlist({ 
+          productId: product.productId, 
+          name: product.name, 
+          price: product.price, 
+          image: product.image || product.media[0]?.url 
+        });
+      }
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    setCartLoading(true);
+    try {
+      await addToCart({ ...product, qty });
+      navigate("/cart");
+    } finally {
+      setCartLoading(false);
+    }
   };
 
   if (loading) {
-  return (
-    <div className="product-details-container">
-      
-      {/* Left: Gallery Skeleton */}
-      <div className="product-gallery">
-        <div className="thumbnails-list">
-          {Array(4).fill().map((_, i) => (
-            <div key={i} className="thumb-skeleton shimmer"></div>
-          ))}
+    return (
+      <div className="product-details-container anim-fade-in">
+        <div className="product-gallery">
+          <div className="thumbnails-list">
+            {Array(4).fill().map((_, i) => (
+              <div key={i} className="thumb-skeleton shimmer"></div>
+            ))}
+          </div>
+          <div className="main-media-display">
+            <div className="main-media-skeleton shimmer"></div>
+          </div>
         </div>
 
-        <div className="main-media-display">
-          <div className="main-media-skeleton shimmer"></div>
+        <div className="product-info-section">
+          <div className="text-skeleton title shimmer"></div>
+          <div className="text-skeleton small shimmer" style={{ width: '40%' }}></div>
+          <div className="text-skeleton price shimmer" style={{ width: '30%' }}></div>
+          <div className="text-skeleton desc shimmer"></div>
+          <div className="text-skeleton desc shimmer" style={{ width: '90%' }}></div>
+          <div className="text-skeleton button shimmer" style={{ marginTop: '20px' }}></div>
         </div>
       </div>
+    );
+  }
 
-      {/* Right: Info Skeleton */}
-      <div className="product-info-section">
-        <div className="text-skeleton title shimmer"></div>
-        <div className="text-skeleton small shimmer"></div>
-        <div className="text-skeleton price shimmer"></div>
-        <div className="text-skeleton desc shimmer"></div>
-
-        <div className="text-skeleton button shimmer"></div>
-        <div className="text-skeleton button shimmer"></div>
-      </div>
-    </div>
-  );
-}
   if (error) return <div className="error-message">{error}</div>;
   if (!product) return null;
 
   return (
-    <div className="product-details-container">
+    <div className="product-details-container anim-fade-in">
       {/* Left Side: Image Gallery */}
       <div className="product-gallery">
         <div className="thumbnails-list">
@@ -110,7 +125,7 @@ function ProductDetails() {
             >
               {item.type === "video" && <PlayCircle className="video-icon-small" size={16} />}
               <img 
-                src={item.type === "image" ? item.url : "https://via.placeholder.com/100?text=Video"} 
+                src={item.type === "image" ? item.url : ""} 
                 alt={`Thumbnail ${index}`} 
               />
             </div>
@@ -128,7 +143,7 @@ function ProductDetails() {
 
       {/* Right Side: Product Info */}
       <div className="product-info-section">
-        <nav className="breadcrumb">Home / Hampers / {product.name}</nav>
+    
         
         <h1 className="product-title">{product.name}</h1>
         
@@ -154,19 +169,42 @@ function ProductDetails() {
         <div className="quantity-selector">
           <span>Quantity:</span>
           <div className="qty-controls">
-            <button onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
+            <button onClick={() => setQty(Math.max(1, qty - 1))} disabled={cartLoading}>-</button>
             <input type="number" value={qty} readOnly />
-            <button onClick={() => setQty(qty + 1)}>+</button>
+            <button onClick={() => setQty(qty + 1)} disabled={cartLoading}>+</button>
           </div>
         </div>
 
         <div className="action-buttons">
-          <button className="add-to-cart-btn" onClick={handleAddToCart}>
-            <ShoppingCart size={20} /> ADD TO CART
+          <button 
+            className="add-to-cart-btn" 
+            onClick={handleAddToCart}
+            disabled={cartLoading}
+          >
+            {cartLoading ? (
+               <span className="btn-content">
+                <Loader2 className="animate-spin" size={20} /> ADDING...
+               </span>
+            ) : (
+              <>
+                <ShoppingCart size={20} /> ADD TO CART
+              </>
+            )}
           </button>
-          <button className="wishlist-btn" onClick={handleWishlist}>
-            <Heart size={20} fill={isInWishlist ? "red" : "none"} />
-            {isInWishlist ? "REMOVE" : "WISHLIST"}
+
+          <button 
+            className={`wishlist-btn ${isInWishlist ? 'active' : ''}`} 
+            onClick={handleWishlist}
+            disabled={wishlistLoading}
+          >
+            {wishlistLoading ? (
+              <span className="btn-loader small red"></span>
+            ) : (
+              <>
+                <Heart size={20} fill={isInWishlist ? "#ff3366" : "none"} color={isInWishlist ? "#ff3366" : "currentColor"} />
+                {isInWishlist ? "REMOVE" : "WISHLIST"}
+              </>
+            )}
           </button>
         </div>
 

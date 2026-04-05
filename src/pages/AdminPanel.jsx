@@ -8,14 +8,17 @@ import {
   Package, 
   X, 
   CheckCircle, 
-  AlertCircle,Shield,Tag,
+  AlertCircle,
+  Shield,
+  Tag,
   Image as ImageIcon
 } from "lucide-react";
 
 function AdminPanel() {
-  const [activeTab, setActiveTab] = useState("add"); // "add", "view-cats", "view-prods"
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" }); // type: "success" or "error"
+  const [activeTab, setActiveTab] = useState("add"); 
+  const [loading, setLoading] = useState(false); // Global loading for forms
+  const [deletingId, setDeletingId] = useState(null); // Local loading for specific delete buttons
+  const [message, setMessage] = useState({ text: "", type: "" }); 
 
   // Data States
   const [categories, setCategories] = useState([]);
@@ -50,8 +53,7 @@ function AdminPanel() {
         api.getProducts(),
       ]);
       setCategories(catRes.data.data || catRes.data || []);
-      setAllCategories([{ name: "TRENDING" }, ...catRes.data.data|| ["TRENDING"]]); // For category selection in product form
-      
+      setAllCategories([{ name: "TRENDING" }, ...catRes.data.data || []]); 
       setProducts(prodRes.data.data || prodRes.data || []);
     } catch (err) {
       showStatus("Failed to load data from server", "error");
@@ -69,24 +71,27 @@ function AdminPanel() {
     setLoading(true);
     try {
       await api.editCategory(categoryForm);
-      showStatus("Category created successfully!", "success");
+      showStatus("Category updated successfully!", "success");
       setCategoryForm({ name: "", image: "", active: true });
       fetchData();
     } catch (err) {
-      showStatus("Error creating category", "error");
+      showStatus("Error saving category", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteCategory = async (id, name) => {
+  const deleteCategory = async (name) => {
     if (!window.confirm(`Delete category "${name}"? This may affect products.`)) return;
+    setDeletingId(name);
     try {
-      await api.deleteCategory(id);
+      await api.deleteCategory(name);
       showStatus("Category deleted", "success");
       fetchData();
     } catch (err) {
       showStatus("Could not delete category", "error");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -110,7 +115,7 @@ function AdminPanel() {
   const cancelEdit = () => {
     setIsEditing(false);
     setEditId(null);
-    setProductForm({ name: "", description: "", price: "", category: "", image: "", gallery: "", videoUrl: "", tags: ""});
+    setProductForm({ name: "", description: "", price: "", category: [], image: "", gallery: "", videoUrl: "", tags: ""});
   };
 
   const handleProductSubmit = async (e) => {
@@ -139,18 +144,20 @@ function AdminPanel() {
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Permanent delete this product?")) return;
+    setDeletingId(id);
     try {
       await api.deleteProduct(id);
       showStatus("Product removed", "success");
       fetchData();
     } catch (err) {
       showStatus("Error deleting product", "error");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
     <div className="admin-dashboard">
-      {/* Sidebar Navigation */}
       <aside className="admin-sidebar">
         <div className="sidebar-header">
           <Shield size={24} color="#ff3366" />
@@ -169,7 +176,6 @@ function AdminPanel() {
         </nav>
       </aside>
 
-      {/* Main Content Area */}
       <main className="admin-content">
         {message.text && (
           <div className={`status-toast ${message.type}`}>
@@ -178,7 +184,6 @@ function AdminPanel() {
           </div>
         )}
 
-        {/* TAB: ADD / EDIT FORM */}
         {activeTab === "add" && (
           <div className="admin-forms-container anim-fade-in">
             <header className="content-header">
@@ -187,7 +192,6 @@ function AdminPanel() {
             </header>
 
             <div className="forms-grid">
-              {/* Category Form */}
               {!isEditing && (
                 <section className="form-card">
                   <h3><PlusCircle size={18} /> New Category</h3>
@@ -200,12 +204,20 @@ function AdminPanel() {
                       <label>Image URL</label>
                       <input type="text" placeholder="https://..." value={categoryForm.image} onChange={(e) => setCategoryForm({...categoryForm, image: e.target.value})} required />
                     </div>
-                    <button type="submit" className="btn-primary" disabled={loading}>Create Category</button>
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                      {loading ? (
+                        <div className="btn-content">
+                          <span className="btn-loader"></span>
+                          <span>Creating...</span>
+                        </div>
+                      ) : (
+                        "Create Category"
+                      )}
+                    </button>
                   </form>
                 </section>
               )}
 
-              {/* Product Form */}
               <section className="form-card product-card-form">
                 <h3><Package size={18} /> {isEditing ? "Edit Details" : "Launch Product"}</h3>
                 <form onSubmit={handleProductSubmit} className="admin-form">
@@ -221,9 +233,7 @@ function AdminPanel() {
                   </div>
 
                   <div className="field">
-                    <label>Main Category</label>
-                    <div className="field">
-                    <label>Target Categories (Select Multiple)</label>
+                    <label>Target Categories</label>
                     <div className="category-checkbox-grid">
                       {allCategories.map((c) => (
                         <label key={c.name} className="checkbox-label">
@@ -236,10 +246,7 @@ function AdminPanel() {
                               if (checked) {
                                 setProductForm({ ...productForm, category: [...currentCats, c.name] });
                               } else {
-                                setProductForm({ 
-                                  ...productForm, 
-                                  category: currentCats.filter((name) => name !== c.name) 
-                                });
+                                setProductForm({ ...productForm, category: currentCats.filter((name) => name !== c.name) });
                               }
                             }}
                           />
@@ -247,7 +254,6 @@ function AdminPanel() {
                         </label>
                       ))}
                     </div>
-                  </div>
                   </div>
 
                   <div className="field">
@@ -259,30 +265,35 @@ function AdminPanel() {
                     <label>Full Description</label>
                     <textarea value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} />
                   </div>
-                  {/* ✅ Added Tags Field */}
+
                   <div className="field">
-                    <label><Tag size={14} style={{ marginBottom: '-2px', marginRight: '4px' }}/> Tags (Comma Separated)</label>
+                    <label><Tag size={14}/> Tags (Comma Separated)</label>
                     <input 
                       type="text" 
                       value={productForm.tags} 
                       onChange={(e) => setProductForm({...productForm, tags: e.target.value})} 
-                      placeholder="BestSeller, NewArrival, Luxury..." 
+                      placeholder="BestSeller, NewArrival..." 
                     />
                   </div>
 
-                  <div className="input-row">
-                    <div className="field">
-                      <label>Gallery Images (comma separated)</label>
-                      <input type="text" value={productForm.gallery} onChange={(e) => setProductForm({...productForm, gallery: e.target.value})} />
-                    </div>
+                  <div className="field">
+                    <label>Gallery Images (comma separated)</label>
+                    <input type="text" value={productForm.gallery} onChange={(e) => setProductForm({...productForm, gallery: e.target.value})} />
                   </div>
 
                   <div className="form-actions">
                     <button type="submit" className="btn-primary" disabled={loading}>
-                      {isEditing ? "Update Product" : "Add to Store"}
+                      {loading ? (
+                        <div className="btn-content">
+                          <span className="btn-loader"></span>
+                          <span>{isEditing ? "Updating..." : "Saving..."}</span>
+                        </div>
+                      ) : (
+                        <>{isEditing ? "Update Product" : "Add to Store"}</>
+                      )}
                     </button>
                     {isEditing && (
-                      <button type="button" className="btn-secondary" onClick={cancelEdit}>
+                      <button type="button" className="btn-secondary" onClick={cancelEdit} disabled={loading}>
                         <X size={16} /> Cancel
                       </button>
                     )}
@@ -293,7 +304,6 @@ function AdminPanel() {
           </div>
         )}
 
-        {/* TAB: MANAGE CATEGORIES */}
         {activeTab === "view-cats" && (
           <div className="table-view anim-fade-in">
             <header className="content-header">
@@ -315,8 +325,16 @@ function AdminPanel() {
                       <td><div className="img-box"><img src={cat.image} alt="" /></div></td>
                       <td className="bold">{cat.name}</td>
                       <td>
-                        <button className="icon-btn delete" onClick={() => deleteCategory(cat.name)}>
-                          <Trash2 size={18} />
+                        <button 
+                          className={`icon-btn delete ${deletingId === cat.name ? 'loading' : ''}`} 
+                          onClick={() => deleteCategory(cat.name)}
+                          disabled={deletingId !== null}
+                        >
+                          {deletingId === cat.name ? (
+                            <span className="btn-loader small"></span>
+                          ) : (
+                            <Trash2 size={18} />
+                          )}
                         </button>
                       </td>
                     </tr>
@@ -327,7 +345,6 @@ function AdminPanel() {
           </div>
         )}
 
-        {/* TAB: MANAGE PRODUCTS */}
         {activeTab === "view-prods" && (
           <div className="table-view anim-fade-in">
              <header className="content-header">
@@ -359,8 +376,20 @@ function AdminPanel() {
                       <td><span className="cat-pill">{prod.category?.[0]}</span></td>
                       <td>
                         <div className="action-cell">
-                          <button className="icon-btn edit" onClick={() => startEditProduct(prod)}><Edit size={18} /></button>
-                          <button className="icon-btn delete" onClick={() => deleteProduct(prod.productId)}><Trash2 size={18} /></button>
+                          <button className="icon-btn edit" onClick={() => startEditProduct(prod)} disabled={deletingId !== null}>
+                            <Edit size={18} />
+                          </button>
+                          <button 
+                            className={`icon-btn delete ${deletingId === prod.productId ? 'loading' : ''}`} 
+                            onClick={() => deleteProduct(prod.productId)}
+                            disabled={deletingId !== null}
+                          >
+                            {deletingId === prod.productId ? (
+                              <span className="btn-loader small"></span>
+                            ) : (
+                              <Trash2 size={18} />
+                            )}
+                          </button>
                         </div>
                       </td>
                     </tr>

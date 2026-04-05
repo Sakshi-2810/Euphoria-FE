@@ -1,23 +1,19 @@
-import React, { useEffect, useState, useContext } from "react"; // Added useContext
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, MapPin, LogOut, ChevronRight, Plus } from "lucide-react";
+import { Package, MapPin, LogOut, ChevronRight, Plus, Loader2 } from "lucide-react";
 import * as api from "../services/api";
-import { AuthContext } from "../context/AuthContext"; // Import your AuthContext
+import { AuthContext } from "../context/AuthContext";
 
 function Profile() {
   const navigate = useNavigate();
-  
-  // 1. Get user and logout from Context
   const { user, logout } = useContext(AuthContext); 
   
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [deletingAddressId, setDeletingAddressId] = useState(null);
   const [activeTab, setActiveTab] = useState("orders");
-
-  // 2. Simplified Access Control: Redirection is now handled by your App.jsx 
-  // (the <Navigate to="/login" /> wrapper), but we still handle null checks.
 
   useEffect(() => {
     if (user) {
@@ -25,27 +21,26 @@ function Profile() {
       fetchAddresses();
     }
   }, [user]);
- const handleDelete = async (id) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this address?");
-  if (!confirmDelete) return;
 
-  try {
-    await api.deleteAddress(id);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
 
-    // ✅ Instant UI update (no refetch needed)
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+    setDeletingAddressId(id);
+    try {
+      await api.deleteAddress(id);
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete address");
+    } finally {
+      setDeletingAddressId(null);
+    }
+  };
 
-    alert("Address deleted successfully!");
-  } catch (err) {
-    console.error("Delete failed:", err);
-    alert("Failed to delete address");
-  }
-};
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
       const res = await api.getUserOrders();
-      // Ensure we handle different backend response structures
       setOrders(res.data.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
@@ -57,7 +52,6 @@ function Profile() {
   const fetchAddresses = async () => {
     setLoadingAddresses(true);
     try {
-      // Using user.id or email from context
       const res = await api.getAddress();
       setAddresses(res.data.data || res.data || []);
     } catch (err) {
@@ -67,21 +61,19 @@ function Profile() {
     }
   };
 
-  // 3. Updated Logout to use Context
   const handleLogout = () => {
-    logout(); // Clears storage AND updates global state instantly
+    logout();
     navigate("/login");
   };
 
   if (!user) return null;
 
   return (
-    <div className="profile-container">
+    <div className="profile-container anim-fade-in">
       <div className="profile-grid">
         {/* Sidebar */}
-        <div className="profile-sidebar">
+        <aside className="profile-sidebar">
           <div className="user-info">
-            {/* Safe check for name */}
             <div className="user-avatar">{user.name?.charAt(0).toUpperCase()}</div>
             <div>
               <h3>{user.name}</h3>
@@ -89,7 +81,7 @@ function Profile() {
             </div>
           </div>
 
-          <div className="profile-menu">
+          <nav className="profile-menu">
             <div 
               className={`menu-item ${activeTab === "orders" ? "active" : ""}`}
               onClick={() => setActiveTab("orders")}
@@ -105,11 +97,11 @@ function Profile() {
             <button className="logout-btn" onClick={handleLogout}>
               <LogOut size={20} /> Logout
             </button>
-          </div>
-        </div>
+          </nav>
+        </aside>
 
         {/* Main Content */}
-        <div className="profile-main">
+        <main className="profile-main">
           {activeTab === "orders" && (
             <div className="tab-content">
               <div className="section-header">
@@ -117,7 +109,11 @@ function Profile() {
               </div>
               
               {loadingOrders ? (
-                <div className="loader-small"></div>
+                <div className="orders-list">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="order-card skeleton-row shimmer"></div>
+                  ))}
+                </div>
               ) : orders.length === 0 ? (
                 <div className="order-placeholder">
                   <Package size={48} color="#ccc" strokeWidth={1} />
@@ -128,7 +124,7 @@ function Profile() {
                 <div className="orders-list">
                   {orders.map(order => (
                     <div key={order.id} className="order-card" onClick={() => navigate(`/orders/${order.id}`)}>
-                       <div className="order-info">
+                      <div className="order-info">
                         <Package size={24} className="order-icon" />
                         <div>
                           <p className="order-id">Order #{order.id}</p>
@@ -154,7 +150,11 @@ function Profile() {
               </div>
 
               {loadingAddresses ? (
-                <div className="loader-small"></div>
+                <div className="addresses-grid">
+                  {[1, 2].map(i => (
+                    <div key={i} className="address-card-skeleton shimmer"></div>
+                  ))}
+                </div>
               ) : addresses.length === 0 ? (
                 <div className="order-placeholder">
                   <MapPin size={48} color="#ccc" strokeWidth={1} />
@@ -162,47 +162,46 @@ function Profile() {
                 </div>
               ) : (
                 <div className="addresses-grid">
-                  {addresses.map((addr, idx) => (
-                <div key={idx} className="address-card">
-      
-                {/* EDIT */}
-                <button
-                  className="edit-btn"
-                  onClick={() =>
-                    navigate(`/profile/edit-address/${addr.id}`, { state: addr })
-                  }
-                >
-                  Edit
-                </button>
+                  {addresses.map((addr) => (
+                    <div key={addr.id} className={`address-card ${addr.default ? "default-address" : ""}`}>
+                      <div className="address-actions">
+                        <button
+                          className="edit-btn"
+                          disabled={deletingAddressId !== null}
+                          onClick={() => navigate(`/profile/edit-address/${addr.id}`, { state: addr })}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="delete-btn"
+                          disabled={deletingAddressId !== null}
+                          onClick={() => handleDelete(addr.id)}
+                        >
+                          {deletingAddressId === addr.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            "Delete"
+                          )}
+                        </button>
+                      </div>
 
-                {/* DELETE */}
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDelete(addr.id)}
-                >
-                  Delete
-                </button>
+                      <div className="address-header">
+                        <strong>{addr.fullName}</strong>
+                        {addr.default && <span className="address-tag default-tag">Default</span>}
+                      </div>
 
-                <div className="address-header">
-                  <strong>{addr.fullName}</strong>
-                  
+                      <p className="address-text">{addr.addressLine}</p>
+                      <p className="address-text">
+                        {addr.city}, {addr.state} - {addr.pincode}
+                      </p>
+                      <p className="address-phone">Phone: {addr.phone}</p>
+                    </div>
+                  ))}
                 </div>
-                <span className={` ${addr.default ? "address-tag default-tag" : ""}`}>
-                    {addr.default ? "Default" : ""}
-                </span>
-
-                <p className="address-text">{addr.addressLine}</p>
-                <p className="address-text">
-                  {addr.city}, {addr.state} - {addr.pincode}
-                </p>
-                <p className="address-phone">Phone: {addr.phone}</p>
-              </div>
-            ))}
-          </div>
               )}
             </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

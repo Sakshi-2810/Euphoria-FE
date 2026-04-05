@@ -56,10 +56,10 @@ export const CartProvider = ({ children }) => {
 
       if (existing) {
         newCart = prev.map((item) =>
-          item.productId === product.productId ? { ...item, qty: item.qty + 1 } : item
+          item.productId === product.productId ? { ...item, qty: item.qty + product.qty } : item
         );
       } else {
-        newCart = [...prev, { ...product, qty: 1 }];
+        newCart = [...prev, { ...product, qty: product.qty || 1 }];
       }
 
       localStorage.setItem("guest_cart", JSON.stringify(newCart));
@@ -109,7 +109,7 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, updateQty, removeFromCart, loading }}>
+    <CartContext.Provider value={{ cart, addToCart, updateQty, removeFromCart, loading,   fetchRemoteCart }}>
       {children}
     </CartContext.Provider>
   );
