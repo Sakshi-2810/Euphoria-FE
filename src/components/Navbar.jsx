@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { Search, ShoppingCart, User, Heart, Shield } from "lucide-react";
 import { useState } from "react";
+import logo from "../logo/logo.jpg";
 
 function Navbar() {
   const { cart } = useContext(CartContext);
@@ -23,7 +24,9 @@ const handleSearch = () => {
     <nav className="navbar">
       <div className="nav-container">
         {/* Logo */}
-        <Link to="/" className="logo">EUPHORIA</Link>
+        <Link to="/" className="logo">
+          <img src={logo} alt="Euphoria Logo" className="logo-img" />
+        </Link>
 
         {/* Search Bar */}
         <div className="search-container">

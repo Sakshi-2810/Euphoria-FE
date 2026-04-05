@@ -64,7 +64,36 @@ function ProductDetails() {
     navigate("/cart");
   };
 
-  if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+  if (loading) {
+  return (
+    <div className="product-details-container">
+      
+      {/* Left: Gallery Skeleton */}
+      <div className="product-gallery">
+        <div className="thumbnails-list">
+          {Array(4).fill().map((_, i) => (
+            <div key={i} className="thumb-skeleton shimmer"></div>
+          ))}
+        </div>
+
+        <div className="main-media-display">
+          <div className="main-media-skeleton shimmer"></div>
+        </div>
+      </div>
+
+      {/* Right: Info Skeleton */}
+      <div className="product-info-section">
+        <div className="text-skeleton title shimmer"></div>
+        <div className="text-skeleton small shimmer"></div>
+        <div className="text-skeleton price shimmer"></div>
+        <div className="text-skeleton desc shimmer"></div>
+
+        <div className="text-skeleton button shimmer"></div>
+        <div className="text-skeleton button shimmer"></div>
+      </div>
+    </div>
+  );
+}
   if (error) return <div className="error-message">{error}</div>;
   if (!product) return null;
 

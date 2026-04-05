@@ -41,13 +41,32 @@ function Wishlist() {
 
   // Page Loader
   if (loading) {
-    return (
-      <div className="loader-container">
-        <div className="loader"></div>
-        <p>Loading your wishlist...</p>
+  return (
+    <div className="wishlist-container">
+      <h2 className="section-title">My Favorites</h2>
+
+      <div className="wishlist-grid">
+        {Array(6).fill().map((_, i) => (
+          <div key={i} className="wishlist-card">
+            
+            {/* Image Skeleton */}
+            <div className="wishlist-image">
+              <div className="image-skeleton shimmer"></div>
+            </div>
+
+            {/* Details Skeleton */}
+            <div className="wishlist-details">
+              <div className="text-skeleton small shimmer"></div>
+              <div className="text-skeleton price shimmer"></div>
+              <div className="text-skeleton button shimmer"></div>
+            </div>
+
+          </div>
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="wishlist-container">

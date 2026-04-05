@@ -74,7 +74,38 @@ useEffect(() => {
   loadInitialData();
 }, []); 
 
-  if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+ if (loading) {
+  return (
+    <div className="products-page">
+      
+      {/* Header Skeleton */}
+      <div className="products-header">
+        <div className="text-skeleton small shimmer"></div>
+        <div className="text-skeleton small shimmer"></div>
+      </div>
+
+      <div className="products-layout">
+        
+        {/* Sidebar Skeleton */}
+        <aside className="filter-sidebar">
+          <div className="text-skeleton title shimmer"></div>
+          {Array(5).fill().map((_, i) => (
+            <div key={i} className="text-skeleton small shimmer"></div>
+          ))}
+        </aside>
+
+        {/* Products Skeleton */}
+        <main className="products-main">
+          <div className="product-grid">
+            {Array(8).fill().map((_, i) => (
+              <div key={i} className="product-skeleton shimmer"></div>
+            ))}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="products-page">

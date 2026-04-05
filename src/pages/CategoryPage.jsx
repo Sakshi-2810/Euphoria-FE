@@ -30,7 +30,19 @@ function CategoryPage() {
     fetchProducts();
   }, [name]);
 
-  if (loading) return <p>Loading products...</p>;
+ if (loading) {
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>{name} Hampers</h2>
+
+      <div className="product-grid">
+        {Array(8).fill().map((_, i) => (
+          <div key={i} className="product-skeleton shimmer"></div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
   return (
     <div style={{ padding: "20px" }}>

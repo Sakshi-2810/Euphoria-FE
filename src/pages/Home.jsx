@@ -31,7 +31,34 @@ function Home() {
     fetchData();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+ if (loading) {
+  return (
+    <div className="home-wrapper">
+      {/* Hero Skeleton */}
+      <div className="hero-skeleton shimmer"></div>
+
+      {/* Categories Skeleton */}
+      <section className="home-section">
+        <h2 className="section-title">Shop by Occasion</h2>
+        <div className="categories-container">
+          {Array(6).fill().map((_, i) => (
+            <div key={i} className="category-skeleton shimmer"></div>
+          ))}
+        </div>
+      </section>
+
+      {/* Products Skeleton */}
+      <section className="home-section bg-light">
+        <h2 className="section-title">Trending This Week</h2>
+        <div className="product-grid">
+          {Array(6).fill().map((_, i) => (
+            <div key={i} className="product-skeleton shimmer"></div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
 
   return (
     <div className="home-wrapper">

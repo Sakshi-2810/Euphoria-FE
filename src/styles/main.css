@@ -2174,3 +2174,290 @@ button:last-of-type {
   background: #f8f9fa;
   color: #ff3366;
 }
+
+/* Home Page******************************* */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 37%,
+    #f0f0f0 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Skeleton Shapes */
+.hero-skeleton {
+  height: 300px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.category-skeleton {
+  height: 120px;
+  border-radius: 10px;
+}
+
+.product-skeleton {
+  height: 250px;
+  border-radius: 12px;
+}
+.text-skeleton.small {
+  width: 60%;
+  height: 16px;
+  margin-bottom: 10px;
+}
+
+.text-skeleton.title {
+  width: 80%;
+  height: 20px;
+  margin-bottom: 15px;
+}
+
+/* Image placeholder */
+.image-skeleton {
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+}
+
+.text-skeleton.price {
+  width: 40%;
+  height: 20px;
+  margin-bottom: 10px;
+}
+
+.text-skeleton.button {
+  width: 80%;
+  height: 36px;
+  border-radius: 8px;
+}
+
+/* =========================
+   GLOBAL RESPONSIVE FIXES
+========================= */
+
+/* Tablets */
+@media (max-width: 992px) {
+
+  /* Navbar */
+  .nav-container {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .search-container {
+    order: 3;
+    width: 100%;
+    margin: 10px 0 0;
+  }
+
+  .nav-actions {
+    gap: 15px;
+  }
+
+  /* Hero */
+  .hero-banner {
+    height: 350px;
+    padding: 20px;
+  }
+
+  .hero-content h1 {
+    font-size: 32px;
+  }
+
+  .hero-content p {
+    font-size: 16px;
+  }
+
+  /* Product Grid */
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+  }
+
+  /* Cart Layout */
+  .cart-page-container {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-summary-section {
+    position: relative;
+    top: 0;
+  }
+
+  /* Product Details */
+  .product-details-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .product-gallery {
+    flex-direction: column;
+  }
+
+  /* Profile */
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+
+  /* Navbar */
+  .logo {
+    font-size: 20px;
+  }
+
+  .nav-actions {
+    gap: 10px;
+  }
+
+  .nav-item span {
+    display: none; /* icons only */
+  }
+
+  /* Hero */
+  .hero-banner {
+    height: 280px;
+  }
+
+  .hero-content h1 {
+    font-size: 24px;
+  }
+
+  .shop-now-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  /* Sections */
+  .home-section {
+    padding: 40px 15px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  /* Categories */
+  .category-card {
+    width: 90px;
+  }
+
+  .category-image-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+
+  .category-name {
+    font-size: 12px;
+  }
+
+  /* Product Grid */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  /* Cards */
+  .card {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .card h4 {
+    font-size: 14px;
+  }
+
+  /* Wishlist */
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wishlist-image {
+    height: 180px;
+  }
+
+  /* Cart */
+  .cart-item-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cart-item-image img {
+    width: 100px;
+    height: 120px;
+  }
+
+  .cart-item-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Buttons */
+  .checkout-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* Footer */
+  .footer-container {
+    flex-direction: column;
+    gap: 30px;
+    text-align: center;
+  }
+
+  /* Auth */
+  .auth-card {
+    padding: 25px;
+  }
+
+  .auth-card h2 {
+    font-size: 22px;
+  }
+
+  /* Admin */
+  .admin-dashboard {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .admin-content {
+    padding: 20px;
+  }
+  button {
+  min-height: 40px;
+}
+}
+body {
+  overflow-x: hidden;
+}
+html {
+  scroll-behavior: smooth;
+}
+.logo-img {
+  height: 40px;   /* adjust as needed */
+  width: auto;
+  object-fit: contain;
+}
+.logo {
+  display: flex;
+  align-items: center;
+}
