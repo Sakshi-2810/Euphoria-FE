@@ -134,18 +134,24 @@ function Login() {
         </div>
         <GoogleLogin
           onSuccess={async (res) => {
-            setLoading(true);
-            console.log("Google Login Success:", res);
-            const response = await api.oauthLogin({ token: res.credential });
-            if(response.status === 200) {
-              const { token, user } = response.data.data;
-              login(user, token);
-              navigate("/profile");
-            } else {
-              setError("Google login failed. Please try again.");
+            try {
+              setLoading(true);
+              const response = await api.oauthLogin({ token: res.credential });
+              if(response.status === 200) {
+                const { token, user } = response.data.data;
+                login(user, token);
+                navigate("/profile");
+              } else {
+                setError("Google login failed. Please try again.");
+              }
+              } catch(err) {
+                console.error("OAuth login error:", err);
+                setError("Google login failed. Please try again.");
+              } finally {
+                setLoading(false);
+              }
             }
-            setLoading(false);
-          }}
+          }
           onError={() => {
             console.log("Login Failed");
             setError("Google login failed. Please try again.");
