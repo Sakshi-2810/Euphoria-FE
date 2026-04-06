@@ -121,21 +121,33 @@ function Profile() {
                   <button className="auth-btn" onClick={() => navigate("/")}>Start Shopping</button>
                 </div>
               ) : (
-                <div className="orders-list">
-                  {orders.map(order => (
-                    <div key={order.id} className="order-card" onClick={() => navigate(`/orders/${order.id}`)}>
+               <div className="orders-list">
+                {[...orders]
+                  .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)) 
+                  .map((order, index) => (
+                    <div 
+                      key={order.id} 
+                      className="order-card" 
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                    >
                       <div className="order-info">
                         <Package size={24} className="order-icon" />
                         <div>
-                          <p className="order-id">Order #{order.id}</p>
-                          <p className="order-meta">{order.items?.length || 0} items • ₹{order.totalAmount}</p>
-                          <span className={`status-badge ${order.status?.toLowerCase()}`}>{order.status}</span>
+                          <p className="order-id">
+                           Order #{index + 1}  
+                          </p>
+                          <p className="order-meta">
+                            {order.items?.length || 0} items • ₹{order.totalAmount}
+                          </p>
+                          <span className={`status-badge ${order.status?.toLowerCase()}`}>
+                            {order.status}
+                          </span>
                         </div>
                       </div>
                       <ChevronRight size={16} />
                     </div>
                   ))}
-                </div>
+              </div>
               )}
             </div>
           )}

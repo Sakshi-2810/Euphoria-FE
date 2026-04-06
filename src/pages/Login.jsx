@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowRight, Chrome } from "lucide-react";
 import * as api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { GoogleLogin  } from "@react-oauth/google";
 
 function Login() {
   const [credentials, setCredentials] = useState({
@@ -73,10 +74,6 @@ function Login() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/google`;
-  };
-
   return (
     <div className="auth-container anim-fade-in">
       <div className="auth-card">
@@ -135,14 +132,25 @@ function Login() {
         <div className="auth-divider">
           <span>OR</span>
         </div>
-
-        <button 
-          className="auth-btn google-btn" 
-          onClick={handleGoogleLogin}
-          disabled={loading}
-        >
-          <Chrome size={18} /> Login with Google
-        </button>
+        <GoogleLogin
+          onSuccess={async (res) => {
+            setLoading(true);
+            console.log("Google Login Success:", res);
+            const response = await api.oauthLogin({ token: res.credential });
+            if(response.status === 200) {
+              const { token, user } = response.data.data;
+              login(user, token);
+              navigate("/profile");
+            } else {
+              setError("Google login failed. Please try again.");
+            }
+            setLoading(false);
+          }}
+          onError={() => {
+            console.log("Login Failed");
+            setError("Google login failed. Please try again.");
+          }}
+        />
 
         <p className="auth-footer">
           New to Hampers? <Link to="/signup">Create an account <ArrowRight size={14} /></Link>

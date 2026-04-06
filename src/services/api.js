@@ -49,6 +49,8 @@ export const deleteProduct = (id) => api.delete(`/products/${id}`);
 
 export const loginUser = (data) => api.post("/auth/login", data);
 export const signupUser = (data) => api.post("/auth/signup", data);
+export const oauthLogin = (data) => api.post("/auth/oauth-login", data);
+
 export const getAddress = () => api.get("/user/addresses");
 export const postAddress = (data) => api.post("/user/address", data);
 export const deleteAddress = (id) => api.delete(`/user/address?addressId=${id}`);
@@ -83,4 +85,5 @@ export const getOrderById = (orderId) => api.get(`/orders/${orderId}`);
 export const getAllOrders = () => api.get("/orders/all");
 export const updateOrderStatus = (orderId, status) =>
   api.put(`/orders/${orderId}/status`, null, { params: { status } });
+export const cancelOrder = (orderId) => api.post(`/orders/${orderId}/cancel`);
 export default api;

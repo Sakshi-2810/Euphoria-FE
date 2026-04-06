@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import * as api from "../services/api";
 import { 
   Trash2, 
@@ -15,11 +16,13 @@ import {
 } from "lucide-react";
 
 function AdminPanel() {
-  const [activeTab, setActiveTab] = useState("add"); 
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("view-orders"); 
   const [loading, setLoading] = useState(false); // Global loading for forms
   const [deletingId, setDeletingId] = useState(null); // Local loading for specific delete buttons
   const [message, setMessage] = useState({ text: "", type: "" }); 
-
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   // Data States
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -45,7 +48,22 @@ function AdminPanel() {
   useEffect(() => {
     fetchData();
   }, []);
-  
+  const fetchAllOrders = async () => {
+  setLoadingOrders(true);
+  try {
+    const res = await api.getAllOrders(); // 🔥 admin API
+    setOrders(res.data.data || res.data || []);
+  } catch (err) {
+    showStatus("Failed to fetch orders", "error");
+  } finally {
+    setLoadingOrders(false);
+  }
+};
+useEffect(() => {
+  if (activeTab === "view-orders") {
+    fetchAllOrders();
+  }
+}, [activeTab]);
   const fetchData = async () => {
     try {
       const [catRes, prodRes] = await Promise.all([
@@ -156,14 +174,27 @@ function AdminPanel() {
     }
   };
 
+  const updateOrderStatus = async (id, newStatus) => {
+    try {
+      await api.updateOrderStatus(id, newStatus);
+      showStatus("Order status updated", "success");
+      fetchAllOrders(); // Refresh orders to reflect change
+    } catch (err) {
+      showStatus("Failed to update order status", "error");
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <aside className="admin-sidebar">
         <div className="sidebar-header">
           <Shield size={24} color="#ff3366" />
-          <h2>Euphoria Admin</h2>
+          <h2>Admin Panel</h2>
         </div>
         <nav className="admin-nav">
+          <button className={activeTab === "view-orders" ? "active" : ""} onClick={() => setActiveTab("view-orders")}>
+            <Package size={20} /> View Orders
+          </button>
           <button className={activeTab === "add" ? "active" : ""} onClick={() => setActiveTab("add")}>
             <PlusCircle size={20} /> {isEditing ? "Editing Item" : "Add New"}
           </button>
@@ -394,6 +425,81 @@ function AdminPanel() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {activeTab === "view-orders" && (
+          <div className="table-view anim-fade-in">
+            <header className="content-header">
+              <h1>All Orders</h1>
+              <p>Monitor customer purchases</p>
+            </header>
+
+            <div className="card-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loadingOrders ? (
+                    <tr>
+                      <td colSpan="6">Loading...</td>
+                    </tr>
+                  ) : (
+                    [...orders]
+                      .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)) // latest first
+                      .map((order, index) => (
+                        <tr
+                          onClick={() => navigate(`/orders/${order.id}`)}
+                          key={order.id}
+                          className="clickable-row"
+                        >
+                          {/* 🔢 Index instead of Order ID */}
+                          <td className="bold">{index + 1}</td>
+
+                          <td data-label="User">{order.userId || "N/A"}</td>
+
+                          <td data-label="Items">{order.items?.length || 0}</td>
+
+                          <td data-label="Total" className="bold">
+                            ₹{order.totalAmount}
+                          </td>
+
+                          <td data-label="Status">
+                            <select
+                              className={`status-dropdown ${order.status?.toLowerCase()}`}
+                              value={order.status}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                updateOrderStatus(order.id, e.target.value)
+                              }
+                            >
+                              <option value="PENDING">Pending</option>
+                              <option value="CONFIRMED">Confirmed</option>
+                              <option value="SHIPPED">Shipped</option>
+                              <option value="DELIVERED">Delivered</option>
+                              <option value="CANCELLED">Cancelled</option>
+                            </select>
+                          </td>
+
+                          <td data-label="Date">
+                            {order.orderDate
+                              ? new Date(order.orderDate).toLocaleDateString("en-IN")
+                              : "N/A"}
+                          </td>
+                        </tr>
+                      ))
+                  )}
                 </tbody>
               </table>
             </div>

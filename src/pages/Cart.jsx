@@ -78,6 +78,37 @@ function Cart() {
       </div>
     );
   }
+  const handlePlaceOrder = async () => {
+  if (!selectedAddress) {
+    alert("Please select address");
+    return;
+  }
+
+  try {
+    const orderData = {
+      items: items.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        qty: item.qty || 1,
+        image: item.image
+      })),
+      totalAmount: total,
+      shippingAddress: selectedAddress,
+      paymentMethod: "COD" // you can change later (UPI, Razorpay etc.)
+    };
+
+    const res = await api.placeOrder(orderData);
+
+    console.log("Order placed:", res.data);
+    // ✅ Redirect
+    navigate("/orders"); // or success page
+
+  } catch (err) {
+    console.error("Order failed:", err);
+    alert("Failed to place order");
+  }
+};
 
   return (
     <div className="cart-page-container">
@@ -177,7 +208,7 @@ function Cart() {
           <button 
             className="checkout-btn" 
             disabled={!selectedAddress}
-            onClick={() => console.log("Checkout with address:", selectedAddress.id)}
+            onClick={handlePlaceOrder}
           >
             {selectedAddress ? "Place Order" : "Select Address to Continue"}
           </button>

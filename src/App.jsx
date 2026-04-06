@@ -16,6 +16,8 @@ import Wishlist from "./pages/Wishlist";
 import AddAddress from "./pages/AddAddresses"; 
 import Products from "./pages/Products";
 import ScrollToTop from "./components/ScrollToTop";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import OrderDetails from "./pages/OrderDetails";
 
 function App() {
   // ✅ FIX: Use user from Context, not localStorage directly.
@@ -26,12 +28,13 @@ function App() {
   if (loading) return <div className="loader"></div>;
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Navbar />
-      <main style={{ minHeight: '80vh' }}> 
-        <Routes>
-          <Route path="/" element={<Home />} />
+    <GoogleOAuthProvider clientId="250203554614-3bp5i5k3v9ciqrlc0mq6cn9026keig1t.apps.googleusercontent.com">
+      <BrowserRouter>
+        <ScrollToTop />
+        <Navbar />
+        <main style={{ minHeight: '80vh' }}> 
+          <Routes>
+            <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/cart" element={<Cart />} />
@@ -40,7 +43,7 @@ function App() {
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/wishlist" element={<Wishlist />}/>
           <Route path="/profile/edit-address/:id" element={<AddAddress />} />
-          
+          <Route path="/orders/:id" element={<OrderDetails />} />
           {/* ✅ Protected Routes - Now reactive to Context state */}
           <Route 
             path="/profile" 
@@ -72,6 +75,7 @@ function App() {
       </main>
       <Footer />
     </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 
