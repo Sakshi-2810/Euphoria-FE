@@ -26,11 +26,8 @@ api.interceptors.response.use(
       // Token expired / unauthorized
       localStorage.removeItem("user");
       localStorage.removeItem("token");
-
-      // Optional: clear everything
-      // localStorage.clear();
+      window.location.reload();
     }
-
     return Promise.reject(error);
   }
 );
