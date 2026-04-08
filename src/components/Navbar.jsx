@@ -5,6 +5,7 @@ import { CartContext } from "../context/CartContext";
 import { Search, ShoppingCart, User, Heart, Shield } from "lucide-react";
 import { useState } from "react";
 import logo from "../logo/logo.jpg";
+import Notification from "./Notification";
 
 function Navbar() {
   const { cart } = useContext(CartContext);
@@ -69,6 +70,10 @@ const handleSearch = () => {
             >
               <Shield size={18} /> Admin
             </button>
+          )}
+
+          {user?.role === "ADMIN" && (
+            <Notification isDropdown={true} />
           )}
         </div>
       </div>
